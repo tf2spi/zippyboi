@@ -1,15 +1,19 @@
 #ifndef ZIPPYBOI_H
 #define ZIPPYBOI_H
 
-#if defined(_MSC_VER) || defined(__SYMBIAN32__)
+#if defined(_MSC_VER)
+// Until I actually figure out how MSVC works...
+#include <stdint.h>
 typedef unsigned char zippyboi_u8;
 typedef   signed char zippyboi_i8;
 typedef unsigned short zippyboi_u16;
 typedef   signed short zippyboi_i16;
 typedef unsigned int   zippyboi_u32;
 typedef   signed int   zippyboi_i32;
-typedef unsigned __uint64 zippyboi_i64;
-typedef   signed __int64 zippyboi_i64;
+typedef  unsigned long long zippyboi_u64;
+typedef  signed long long zippyboi_i64;
+typedef  uintptr_t zippyboi_uptr; 
+typedef  intptr_t zippyboi_iptr; 
 #else
 #include <stdint.h>
 typedef uint8_t zippyboi_u8;
@@ -20,6 +24,8 @@ typedef uint32_t zippyboi_u32;
 typedef int32_t  zippyboi_i32;
 typedef uint64_t zippyboi_u64;
 typedef int64_t zippyboi_i64;
+typedef intptr_t zippyboi_iptr;
+typedef uintptr_t zippyboi_uptr;
 #endif
 
 typedef zippyboi_i32 zippyboi_size;
@@ -27,9 +33,12 @@ typedef zippyboi_i32 zippyboi_bool;
 #define ZIPPYBOI_FALSE 0
 #define ZIPPYBOI_TRUE 1
 
-enum zippyboi_file_seek
+#define ZIPPYBOI_NULL ((void *)(zippyboi_iptr)0)
+#define ZIPPYBOI_NULLN ((void *)~(zippyboi_ptr)ZIPPYBOI_NULL)
+
+enum zippyboi_disk_seek
 {
-	ZIPPYBOI_SEEK_BEGIN = -1,
+	ZIPPYBOI_SEEK_SET = -1,
 	ZIPPYBOI_SEEK_CUR = 0,
 	ZIPPYBOI_SEEK_END = 1,
 };
@@ -57,18 +66,18 @@ enum zippyboi_codec_type
 };
 
 typedef zippyboi_i64 zippyboi_off;
-typedef void *(*zippyboi_reopen)(void *file);
-typedef void (*zippyboi_close)(void *file);
-typedef zippyboi_size (*zippyboi_write)(void *file, void *mem, zippyboi_size size);
-typedef zippyboi_size (*zippyboi_read)(void *file, void *mem, zippyboi_size cap);
-typedef zippyboi_off (*zippyboi_seek)(void *file, zippyboi_off off, int whence);
+typedef void *(*zippyboi_reopen)(void *disk);
+typedef void (*zippyboi_close)(void *disk);
+typedef zippyboi_size (*zippyboi_write)(void *disk, void *mem, zippyboi_size size);
+typedef zippyboi_size (*zippyboi_read)(void *disk, void *mem, zippyboi_size cap);
+typedef zippyboi_off (*zippyboi_seek)(void *disk, zippyboi_off off, int whence);
 typedef void *(*zippyboi_realloc)(void *mem, zippyboi_size size);
 typedef void (*zippyboi_free)(void *mem);
 typedef void *(*zippyboi_codec_alloc)(int codec, int level);
 typedef void (*zippyboi_codec_free)(void *codec);
-typedef zippyboi_size (*zippyboi_codec_feed)(void *codec, void *mem, zippyboi_size size);
-typedef zippyboi_size (*zippyboi_codec_barf)(void *codec, void *mem, zippyboi_size cap);
-typedef void (*zippyboi_codec_seek)(void *codec, int whence);
+typedef zippyboi_size (*zippyboi_codec_bufsize)(void *codec);
+typedef zippyboi_bool (*zippyboi_codec_exchange)(void *codec, void *in, zippyboi_size *incount, void *out, zippyboi_size *outcount);
+typedef zippyboi_bool (*zippyboi_codec_seek)(void *codec, int whence);
 typedef void *(*zippyboi_lock_alloc)(void);
 typedef void (*zippyboi_lock)(void *lock);
 typedef void (*zippyboi_unlock)(void *lock);
@@ -85,33 +94,12 @@ struct zippyboi_vtable
 	zippyboi_free free;
 	zippyboi_codec_alloc codec_alloc;
 	zippyboi_codec_free codec_free;
-	zippyboi_codec_feed codec_feed;
-	zippyboi_codec_barf codec_barf;
+	zippyboi_codec_bufsize codec_bufsize;
+	zippyboi_codec_exchange codec_exchange;
 	zippyboi_codec_seek codec_seek;
 	zippyboi_lock_alloc lock_alloc;
 	zippyboi_lock lock;
 	zippyboi_lock_free lock_free;
-};
-
-struct zippyboi_header
-{
-	zippyboi_off data_offset;
-	zippyboi_i64 decode_size;
-	zippyboi_u32 crc32;
-	zippyboi_u16 compression;
-
-	// Unnecessary for reading the file
-#ifndef ZIPPYBOI_REPO_ONLY
-	zippyboi_u16 date;
-	zippyboi_u16 time;
-	zippyboi_u16 flags;
-	zippyboi_u16 internal;
-	zippyboi_u32 external;
-	zippyboi_u16 version;
-	zippyboi_u16 version_needed;
-	zippyboi_off lfh_offset;
-	zippyboi_i64 encode_size;
-#endif
 };
 
 struct zippyboi_footer
@@ -126,8 +114,9 @@ struct zippyboi_footer
 struct zippyboi_map
 {
 	char *strtable;
-	const char **mapping;
-	struct zippyboi_header *headers;
+	const char **fnames;
+	void **cfhs;
+	void *cdir;
 };
 
 struct zippyboi
@@ -145,7 +134,10 @@ struct zippyboi_stream
 	struct zippyboi_vtable *vtable;
 	void *lock;
 	void *codec;
-	void *file;
+	void *disk;
+	void *codec_buffer;
+	zippyboi_size codec_bufsize;
+	zippyboi_size codec_bufidx;
 	zippyboi_off begin;
 	zippyboi_off end;
 	zippyboi_off current;
