@@ -1,3 +1,6 @@
+#ifndef ZIPPYBOI_OSAL_H
+#define ZIPPYBOI_OSAL_H
+
 // Definition in implementation
 typedef struct zippyboi_archive *zippyboi_archive;
 typedef int zippyboi_disk;
@@ -154,3 +157,5 @@ void zippyboi_lock_release(zippyboi_lock lock)
 }
 
 #endif // ZIPPYBOI_IMPLEMENTATION
+
+#endif // ZIPPYBOI_OSAL_H

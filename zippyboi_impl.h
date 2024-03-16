@@ -1,3 +1,6 @@
+#ifndef ZIPPYBOI_IMPL_H
+#define ZIPPYBOI_IMPL_H
+
 enum zippyboi_pk_signature
 {
 	ZIPPYBOI_PK_EOCD = 0x06054b50,
@@ -59,3 +62,5 @@ static void zippyboi_break(zippyboi_package *pkg)
 	if (pkg->debugbreak != ZIPPYBOI_NULL)
 		pkg->debugbreak();
 }
+
+#endif // ZIPPYBOI_IMPL_H

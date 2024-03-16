@@ -1,12 +1,11 @@
 #ifndef ZIPPYBOI_H
 #define ZIPPYBOI_H
 
-
 #ifdef ZIPPYBOI_CUSTOM_STDINT
 #include "stdint.h"
-#else
+#else // ZIPPYBOI_CUSTOM_STDINT
 #include <stdint.h>
-#endif
+#endif // ZIPPYBOI_CUSTOM_STDINT
 
 typedef uint8_t zippyboi_u8;
 typedef int8_t zippyboi_i8;
@@ -26,9 +25,9 @@ typedef zippyboi_i32 zippyboi_bool;
 
 #ifdef ZIPPYBOI_CUSTOM_STDDEF
 #include "stddef.h"
-#else
+#else // ZIPPYBOI_CUSTOM_STDDEF
 #include <stddef.h>
-#endif
+#endif // ZIPPYBOI_CUSTOM_STDDEF
 
 #define ZIPPYBOI_NULL NULL
 #define ZIPPYBOI_NULLN ((void *)~(zippyboi_iptr)ZIPPYBOI_NULL)
@@ -66,9 +65,9 @@ typedef zippyboi_i64 zippyboi_off;
 
 #ifdef ZIPPYBOI_USER
 #include "zippyboi_user.h"
-#else
+#else // ZIPPYBOI_USER
 #include "zippyboi_osal.h"
-#endif
+#endif // ZIPPYBOI_USER
 
 zippyboi_disk zippyboi_disk_open(zippyboi_archive archive, zippyboi_u32 disk);
 void zippyboi_disk_close(zippyboi_disk disk);
@@ -90,8 +89,8 @@ void zippyboi_lock_release(zippyboi_lock lock);
 typedef struct zippyboi_package zippyboi_package;
 typedef struct zippyboi_stream zippyboi_stream;
 
-#endif // ZIPPYBOI_H
-
 #ifdef ZIPPYBOI_IMPLEMENTATION
-#include "zippyboi_impl.c"
+#include "zippyboi_impl.h"
 #endif // ZIPPYBOI_IMPLEMENTATION
+
+#endif // ZIPPYBOI_H
